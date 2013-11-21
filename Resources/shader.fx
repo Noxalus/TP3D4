@@ -4,13 +4,15 @@ shared Texture2D Texture;
 struct VertexInput
 {
 	float3 Position   : POSITION;
-	float2 UV  : TEXCOORD0;
+	float2 UV  		  : TEXCOORD0;
+	float3 Normal 	  : NORMAL;
 };
 
 struct VertexOutput
 {
 	float4 Position   : POSITION;
-	float2 UV  : TEXCOORD0;
+	float2 UV  		  : TEXCOORD0;
+	float3 Normal     : NORMAL;
 };
 
 struct PixelOutput
@@ -34,13 +36,15 @@ VertexOutput VertexMain(VertexInput input)
 
 	output.Position = mul(float4(input.Position, 1.0f), WorldViewProj);
 	output.UV = input.UV;
+	output.Normal = input.Normal;
 	
 	return output;
 }
 
 float4 PixelMain(VertexOutput input) : COLOR0	
 {
-	return tex2D(MapSampler, input.UV); 
+	return float4(input.Normal, 1.0f) * 0.5 + 0.5f;
+	
 }
 
 technique normal

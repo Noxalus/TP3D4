@@ -28,6 +28,7 @@ struct Vertex
 {
 	D3DXVECTOR3 Position;
 	D3DXVECTOR2 TextCoord;
+	D3DXVECTOR3 Normal;
 };
 
 
@@ -82,6 +83,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	D3DXMATRIX Position;
 	D3DXMATRIX Rotation;
 
+	float Yaw = 0;
+	float Pitch = 0;
+
 	D3DXMatrixIdentity(&Rotation);
 	D3DXMatrixIdentity(&Position);
 
@@ -91,6 +95,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	D3DXMATRIX View;
 
 	D3DXVECTOR3 CameraPosition (0.f, 0.f, -1.f);
+	D3DXVECTOR3 CameraDirection (0.f, 0.f, 1.f);
+
 
 	D3DXVECTOR3 At (0.f, 0.f, 0.f);
 	D3DXVECTOR3 Up (0.f, 1.f, 0.f);
@@ -99,9 +105,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	// Projection matrix
 	D3DXMATRIX Projection;
 
-	float fovy = D3DX_PI / 2; // pi / 2
+	float fovy = D3DX_PI / 4; // pi / 2
 	D3DXMatrixPerspectiveFovLH(&Projection, fovy, 1.3f, 0.1f, 1000.0f);
-
 
 
 	// Création de l’interface DirectX 9
@@ -153,12 +158,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	{
 		{0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
 		{0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+		{0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
 		D3DDECL_END() 
 	};
 
 	IDirect3DVertexDeclaration9 *pDecl;
 	device->CreateVertexDeclaration(dwDecl3, &pDecl );
-
 
 	// Culling ?
 	//device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
@@ -176,11 +181,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	// Load height map
 	LoadRAW("../Resources/terrainheight.raw");
 
-	/*
-	m_sizeX = 10;
-	m_sizeZ = 10;
-	*/
-
 	// Vertex buffer
 	IDirect3DVertexBuffer9* pMapVertexBuffer;
 	device->CreateVertexBuffer((m_sizeX * m_sizeZ) * sizeof(Vertex), 0, 0, D3DPOOL_DEFAULT, &pMapVertexBuffer, NULL);
@@ -189,15 +189,50 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	pMapVertexBuffer->Lock(0, 0, (void**) &pMapVertexData, 0);
 
-	for(int x = 0; x < m_sizeX; x++)
+	unsigned int i = 0;
+	for(int z = 0; z < m_sizeX; z++)
 	{
-		for(int y = 0; y < m_sizeZ; y++)
+		for(int x = 0; x < m_sizeZ; x++)
 		{
-			float heightValue = m_height[x + (m_sizeX * y)];
+			i = z + (m_sizeX * x);
+			float heightValue = m_height[z + (m_sizeX * x)];
 
-			pMapVertexData[x + (m_sizeX * y)].Position = D3DXVECTOR3(x, heightValue, y);
+			pMapVertexData[i].Position = D3DXVECTOR3(z, heightValue, x);
+			pMapVertexData[i].TextCoord = D3DXVECTOR2(((float)z / (float)m_sizeX), 1 - ((float)x / (float)m_sizeZ));
 
-			pMapVertexData[x + (m_sizeX * y)].TextCoord = D3DXVECTOR2(((float)x / (float)m_sizeX), 1 - ((float)y / (float)m_sizeZ));
+			const D3DXVECTOR3& pos = pMapVertexData[i].Position;
+			pMapVertexData[i].Normal.x = 0.0f;
+			pMapVertexData[i].Normal.y = 0.0f;
+			pMapVertexData[i].Normal.z = 0.0f;
+			D3DXVECTOR3 normal;
+
+			float diffHeight;
+			if (z > 0)
+			{
+				if (z + 1 < m_sizeZ)
+					diffHeight = m_height[i - m_sizeX] - m_height[i + m_sizeX];
+				else
+					diffHeight = m_height[i - m_sizeX] - m_height[i];
+			}
+			else 
+				diffHeight = m_height[i] - m_height[i + m_sizeX];
+
+			D3DXVECTOR3 normalizedVector;
+			D3DXVec3Normalize(&normalizedVector, &D3DXVECTOR3(0.0f, 1.0f, diffHeight));
+			pMapVertexData[i].Normal += normalizedVector;
+			if (x > 0)
+			{
+				if (x + 1 < m_sizeX)
+					diffHeight = m_height[i - 1] - m_height[i + 1];
+				else
+					diffHeight = m_height[i - 1] - m_height[i];
+			}
+			else 
+				diffHeight = m_height[i] - m_height[i + 1];
+
+			D3DXVec3Normalize(&normalizedVector, &D3DXVECTOR3(diffHeight, 1.0f, 0.0f));
+			pMapVertexData[i].Normal += normalizedVector;
+			D3DXVec3Normalize(&pMapVertexData[i].Normal, &pMapVertexData[i].Normal);
 		}
 	}
 
@@ -263,27 +298,61 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		{
 			// Update the input state
 			_inputManager->Manage();
-			
+
+			// Move camera direction
+			if (_inputManager->IsKeyDone(DIK_UP))
+			{
+				if (Pitch < D3DX_PI / 2 - 0.01f)
+					Pitch += 0.05f;
+			}
+			// Left
+			if (_inputManager->IsKeyDone(DIK_LEFT))
+			{
+				Yaw = fmod((Yaw - 0.05f), D3DX_PI);
+			}
+			// Down
+			if (_inputManager->IsKeyDone(DIK_DOWN))
+			{
+				if (Pitch > -(D3DX_PI / 2) + 0.01f)
+					Pitch -= 0.05f;
+			}
+			// Right
+			if (_inputManager->IsKeyDone(DIK_RIGHT))
+			{
+				Yaw = fmod((Yaw + 0.05f), D3DX_PI);
+			}
+
+			CameraDirection.x = sin(Yaw) * cos(Pitch);
+			CameraDirection.y = sin(Pitch) * cos(Yaw);
+			CameraDirection.z = cos(Yaw) * cos(Pitch);
+
+			// Move camera position
 			// Up
 			if (_inputManager->IsKeyDone(DIK_W))
 			{
-				CameraPosition.z += 0.1f;
+				CameraPosition += CameraDirection * 1;
 			}
 			// Left
 			if (_inputManager->IsKeyDone(DIK_A))
 			{
-				CameraPosition.x += 0.1f;
+				D3DXVECTOR3 orthogonaleDirection;
+				D3DXVec3Cross(&orthogonaleDirection, &CameraDirection, &Up);
+				CameraPosition += orthogonaleDirection * 1;
 			}
 			// Down
 			if (_inputManager->IsKeyDone(DIK_S))
 			{
-				CameraPosition.z -= 0.1f;
+				CameraPosition -= CameraDirection * 1;
 			}
 			// Right
 			if (_inputManager->IsKeyDone(DIK_D))
 			{
-				CameraPosition.x -= 0.1f;
+				D3DXVECTOR3 orthogonaleDirection;
+				D3DXVec3Cross(&orthogonaleDirection, &CameraDirection, &Up);
+				CameraPosition -= orthogonaleDirection * 1;
 			}
+
+			At = CameraPosition + CameraDirection;
 
 			D3DXMatrixLookAtLH(&View, &CameraPosition, &At, &Up);
 			D3DXMatrixIdentity(&World);
@@ -305,7 +374,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 			unsigned int cPasses, iPass;
 
-
 			// Draw map
 			device->SetStreamSource(0, pMapVertexBuffer, 0, sizeof(Vertex));
 			device->SetIndices(pMapIndexBuffer);
@@ -323,7 +391,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			}
 
 			pEffect->End();
-
 
 			device->EndScene();
 			device->Present(NULL, NULL, NULL, NULL); 
