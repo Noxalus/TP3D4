@@ -32,10 +32,10 @@ struct Vertex
 };
 
 
-bool LoadRAW (const std::string& map)
+bool LoadRAW(const std::string& map)
 {
 	FILE  *file;
-	fopen_s(&file, map.c_str (), "rb");
+	fopen_s(&file, map.c_str(), "rb");
 	if (!file)
 		return false;
 	fread(&m_sizeX, sizeof(unsigned short), 1, file);
@@ -47,9 +47,9 @@ bool LoadRAW (const std::string& map)
 	fclose(file);
 	int i = 0;
 	for (unsigned short z = 0; z < m_sizeZ; ++z)
-		for (unsigned short x = 0; x < m_sizeX; ++x, ++i)
-			m_height[i] = float ((m_maxY * tmp[i]) / 255.0f);
-	delete[] tmp;
+	for (unsigned short x = 0; x < m_sizeX; ++x, ++i)
+		m_height[i] = float((m_maxY * tmp[i]) / 255.0f);
+	delete [] tmp;
 	return true;
 }
 
@@ -57,7 +57,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 {
 	MSG oMsg;
 
-	if (!CreateWindows (hInstance, nCmdShow))
+	if (!CreateWindows(hInstance, nCmdShow))
 	{
 		MessageBox(NULL, L"Erreur lors de la création de la fenêtre", L"Error", 0);
 		return false;
@@ -94,12 +94,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	// View matrix
 	D3DXMATRIX View;
 
-	D3DXVECTOR3 CameraPosition (0.f, 0.f, -1.f);
-	D3DXVECTOR3 CameraDirection (0.f, 0.f, 1.f);
+	D3DXVECTOR3 CameraPosition(0.f, 0.f, -1.f);
+	D3DXVECTOR3 CameraDirection(0.f, 0.f, 1.f);
 
 
-	D3DXVECTOR3 At (0.f, 0.f, 0.f);
-	D3DXVECTOR3 Up (0.f, 1.f, 0.f);
+	D3DXVECTOR3 At(0.f, 0.f, 0.f);
+	D3DXVECTOR3 Up(0.f, 1.f, 0.f);
 
 
 	// Projection matrix
@@ -114,15 +114,15 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	D3DDISPLAYMODE displayMode;
 	D3DPRESENT_PARAMETERS pp;
-	pD3D->GetAdapterDisplayMode (D3DADAPTER_DEFAULT, &displayMode);
+	pD3D->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &displayMode);
 	pp.Windowed = true; //Mode fenêtré ou pas
 	pp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	pp.BackBufferWidth  = 800;// Taille en x du Back Buffer
-	pp.BackBufferHeight  = 600; // Taille en y du Back Buffer
-	pp.BackBufferFormat  =  displayMode.Format; // Format du Back Buffer
-	pp.BackBufferCount  = 1; // Nombre de Back Buffer
-	pp.MultiSampleType = D3DMULTISAMPLE_NONE ; // Nombre de sample pour l’antialiasing
-	pp.MultiSampleQuality  = 0; // Qualité pour l’antialiasing
+	pp.BackBufferWidth = 800;// Taille en x du Back Buffer
+	pp.BackBufferHeight = 600; // Taille en y du Back Buffer
+	pp.BackBufferFormat = displayMode.Format; // Format du Back Buffer
+	pp.BackBufferCount = 1; // Nombre de Back Buffer
+	pp.MultiSampleType = D3DMULTISAMPLE_NONE; // Nombre de sample pour l’antialiasing
+	pp.MultiSampleQuality = 0; // Qualité pour l’antialiasing
 	pp.hDeviceWindow = hWnd; //Handle de la fenêtre
 	pp.EnableAutoDepthStencil = true; // True si on veut un depth-stencil buffer
 	pp.AutoDepthStencilFormat = D3DFMT_D24S8; // Le format du deth-stencil buffer
@@ -137,13 +137,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	int num_card = 0;
 	// Look for 'NVIDIA PerfHUD' adapter
 	// If it is present, override default settings
-	for (unsigned int adapter = 0; adapter < pD3D->GetAdapterCount (); 
+	for (unsigned int adapter = 0; adapter < pD3D->GetAdapterCount();
 		adapter++)
 	{
 		D3DADAPTER_IDENTIFIER9 identifier;
 		HRESULT Res;
-		Res = pD3D->GetAdapterIdentifier (adapter, 0, &identifier);
-		if (strstr (identifier.Description, "PerfHUD") != 0)
+		Res = pD3D->GetAdapterIdentifier(adapter, 0, &identifier);
+		if (strstr(identifier.Description, "PerfHUD") != 0)
 		{
 			num_card = adapter;
 			DeviceType = D3DDEVTYPE_REF;
@@ -154,16 +154,16 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	//Create and fill other DirectX Stuffs like Vertex/Index buffer, shaders  
 
 	// Vertex declaration
-	D3DVERTEXELEMENT9 dwDecl3[] = 
+	D3DVERTEXELEMENT9 dwDecl3 [] =
 	{
-		{0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-		{0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-		{0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
-		D3DDECL_END() 
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+		{ 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+		{ 0, 20, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
+		D3DDECL_END()
 	};
 
 	IDirect3DVertexDeclaration9 *pDecl;
-	device->CreateVertexDeclaration(dwDecl3, &pDecl );
+	device->CreateVertexDeclaration(dwDecl3, &pDecl);
 
 	// Culling ?
 	//device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
@@ -190,15 +190,15 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	pMapVertexBuffer->Lock(0, 0, (void**) &pMapVertexData, 0);
 
 	unsigned int i = 0;
-	for(int z = 0; z < m_sizeX; z++)
+	for (int z = 0; z < m_sizeX; z++)
 	{
-		for(int x = 0; x < m_sizeZ; x++)
+		for (int x = 0; x < m_sizeZ; x++)
 		{
 			i = z + (m_sizeX * x);
 			float heightValue = m_height[z + (m_sizeX * x)];
 
 			pMapVertexData[i].Position = D3DXVECTOR3(z, heightValue, x);
-			pMapVertexData[i].TextCoord = D3DXVECTOR2(((float)z / (float)m_sizeX), 1 - ((float)x / (float)m_sizeZ));
+			pMapVertexData[i].TextCoord = D3DXVECTOR2(((float) z / (float) m_sizeX), 1 - ((float) x / (float) m_sizeZ));
 
 			const D3DXVECTOR3& pos = pMapVertexData[i].Position;
 			pMapVertexData[i].Normal.x = 0.0f;
@@ -214,7 +214,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 				else
 					diffHeight = m_height[i - m_sizeX] - m_height[i];
 			}
-			else 
+			else
 				diffHeight = m_height[i] - m_height[i + m_sizeX];
 
 			D3DXVECTOR3 normalizedVector;
@@ -227,7 +227,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 				else
 					diffHeight = m_height[i - 1] - m_height[i];
 			}
-			else 
+			else
 				diffHeight = m_height[i] - m_height[i + 1];
 
 			D3DXVec3Normalize(&normalizedVector, &D3DXVECTOR3(diffHeight, 1.0f, 0.0f));
@@ -247,9 +247,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 
 	int counter = 0;
-	for(int y = 0; y < m_sizeZ - 1; y++)
+	for (int y = 0; y < m_sizeZ - 1; y++)
 	{
-		for(int x = 0; x < m_sizeX - 1; x++)
+		for (int x = 0; x < m_sizeX - 1; x++)
 		{
 			// First triangle
 			pMapIndexData[counter] = x + (m_sizeX * (y + 1));
@@ -278,21 +278,21 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	if (D3D_OK != D3DXCreateEffectFromFile(device, pFxFile, NULL, NULL, 0, NULL, &pEffect, &CompilationErrors))
 	{
-		MessageBoxA (NULL, (char *) 
+		MessageBoxA(NULL, (char *)
 			CompilationErrors->GetBufferPointer(), "Error", 0);
 	}
 
-	D3DXHANDLE hWorldViewProj = pEffect->GetParameterByName (NULL, "WorldViewProj");
+	D3DXHANDLE hWorldViewProj = pEffect->GetParameterByName(NULL, "WorldViewProj");
 
-	D3DXHANDLE hTexture = pEffect->GetParameterByName (NULL, "Texture");
+	D3DXHANDLE hTexture = pEffect->GetParameterByName(NULL, "Texture");
 
-	PeekMessage( &oMsg, NULL, 0, 0, PM_NOREMOVE );
-	while ( oMsg.message != WM_QUIT )
+	PeekMessage(&oMsg, NULL, 0, 0, PM_NOREMOVE);
+	while (oMsg.message != WM_QUIT)
 	{
-		if (PeekMessage( &oMsg, NULL, 0, 0, PM_REMOVE )) 
+		if (PeekMessage(&oMsg, NULL, 0, 0, PM_REMOVE))
 		{
-			TranslateMessage( &oMsg );
-			DispatchMessage( &oMsg );
+			TranslateMessage(&oMsg);
+			DispatchMessage(&oMsg);
 		}
 		else
 		{
@@ -308,7 +308,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			// Left
 			if (_inputManager->IsKeyDone(DIK_LEFT))
 			{
-				Yaw = fmod((Yaw - 0.05f), D3DX_PI);
+				Yaw -= 0.05f;
+				if (Yaw < 0)
+					Yaw = 2 * D3DX_PI;
 			}
 			// Down
 			if (_inputManager->IsKeyDone(DIK_DOWN))
@@ -319,7 +321,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			// Right
 			if (_inputManager->IsKeyDone(DIK_RIGHT))
 			{
-				Yaw = fmod((Yaw + 0.05f), D3DX_PI);
+				Yaw = fmod((Yaw + 0.05f), 2 * D3DX_PI);
 			}
 
 			CameraDirection.x = sin(Yaw) * cos(Pitch);
@@ -360,7 +362,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			WorldViewProj = World * View * Projection;
 
 			// Do a lot of thing like draw triangles with DirectX
-			device->Clear(0, NULL, D3DCLEAR_TARGET|D3DCLEAR_ZBUFFER, backgroundColor, 1.0f, 0);
+			device->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, backgroundColor, 1.0f, 0);
 			device->BeginScene();
 
 			// Set device vertex declaration
@@ -380,7 +382,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 			cPasses = 0, iPass = 0;
 			pEffect->Begin(&cPasses, 0);
-			for (iPass= 0; iPass< cPasses; ++iPass)
+			for (iPass = 0; iPass < cPasses; ++iPass)
 			{
 				pEffect->BeginPass(iPass);
 				pEffect->CommitChanges(); // que si on a changé des états après le BeginPass
@@ -393,7 +395,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			pEffect->End();
 
 			device->EndScene();
-			device->Present(NULL, NULL, NULL, NULL); 
+			device->Present(NULL, NULL, NULL, NULL);
 		}
 	}
 
@@ -420,13 +422,13 @@ bool CreateWindows(HINSTANCE hInstance, int nCmdShow)
 	memset(&wcex, 0, sizeof(WNDCLASSEX));
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
-	wcex.style					= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc		= WndProc;
-	wcex.hInstance			= hInstance;
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszClassName	= L"3DTPClassName";
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.hInstance = hInstance;
+	wcex.hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
+	wcex.lpszClassName = L"3DTPClassName";
 
-	if ( RegisterClassEx(&wcex) == 0 )
+	if (RegisterClassEx(&wcex) == 0)
 		return false;
 
 	hWnd = CreateWindow(L"3DTPClassName", L"This course is awesome", WS_OVERLAPPEDWINDOW,
@@ -461,17 +463,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 		break;
 	case WM_KEYUP:
-		{
-			switch(wParam)
-			{
-			case VK_ESCAPE:
-				{
-					PostQuitMessage(0);
-					break;
-				}
-			}
-			break;
-		}
+	{
+					 switch (wParam)
+					 {
+					 case VK_ESCAPE:
+					 {
+									   PostQuitMessage(0);
+									   break;
+					 }
+					 }
+					 break;
+	}
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
