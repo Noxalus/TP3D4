@@ -316,9 +316,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 
 			// Move camera direction
+
+			// Up
 			if (_inputManager->IsKeyDone(DIK_UP))
 			{
-				if (Pitch < D3DX_PI / 2 - 0.01f)
+				if (Pitch < D3DX_PI / 2 - 0.1f)
 					Pitch += 0.05f;
 			}
 			// Left
@@ -331,7 +333,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			// Down
 			if (_inputManager->IsKeyDone(DIK_DOWN))
 			{
-				if (Pitch > -(D3DX_PI / 2) + 0.01f)
+				if (Pitch > -(D3DX_PI / 2) + 0.1f)
 					Pitch -= 0.05f;
 			}
 			// Right
@@ -341,7 +343,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			}
 
 			CameraDirection.x = sin(Yaw) * cos(Pitch);
-			CameraDirection.y = sin(Pitch) * cos(Yaw);
+			CameraDirection.y = sin(Pitch);
 			CameraDirection.z = cos(Yaw) * cos(Pitch);
 
 			// Move camera position
