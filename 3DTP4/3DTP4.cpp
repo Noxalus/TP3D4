@@ -47,8 +47,8 @@ bool LoadRAW(const std::string& map)
 	fclose(file);
 	int i = 0;
 	for (unsigned short z = 0; z < m_sizeZ; ++z)
-	for (unsigned short x = 0; x < m_sizeX; ++x, ++i)
-		m_height[i] = float((m_maxY * tmp[i]) / 255.0f);
+		for (unsigned short x = 0; x < m_sizeX; ++x, ++i)
+			m_height[i] = float((m_maxY * tmp[i]) / 255.0f);
 	delete [] tmp;
 	return true;
 }
@@ -73,6 +73,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	_inputManager->Create(hInstance, hWnd);
 
 	D3DCOLOR backgroundColor = D3DCOLOR_RGBA(0, 0, 0, 0);
+	DWORD fillMode = D3DFILL_SOLID;
+
+	D3DXVECTOR4 *pLightColor = new D3DXVECTOR4(255, 255, 255, 1);
+	D3DXVECTOR4 *pLightDirection = new D3DXVECTOR4(0, 0, 0, 0);
 
 	D3DXMATRIX WorldViewProj;
 	D3DXMatrixIdentity(&WorldViewProj);
@@ -168,8 +172,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	// Culling ?
 	//device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 
-	// Wireframe ?
-	//device->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
 
 	// Load texture
 	LPCWSTR pMapTexture = L"../Resources/terraintexture.jpg";
@@ -283,8 +285,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	}
 
 	D3DXHANDLE hWorldViewProj = pEffect->GetParameterByName(NULL, "WorldViewProj");
-
 	D3DXHANDLE hTexture = pEffect->GetParameterByName(NULL, "Texture");
+	D3DXHANDLE hLightColor = pEffect->GetParameterByName(NULL, "LightColor");
+	D3DXHANDLE hLightDirection = pEffect->GetParameterByName(NULL, "LightDirection");
+	D3DXHANDLE hLookAt = pEffect->GetParameterByName(NULL, "LookAt");
 
 	PeekMessage(&oMsg, NULL, 0, 0, PM_NOREMOVE);
 	while (oMsg.message != WM_QUIT)
@@ -298,6 +302,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		{
 			// Update the input state
 			_inputManager->Manage();
+
+			// Wireframe ?
+			if (_inputManager->IsKeyPressed(DIK_F1))
+			{
+				if (fillMode == D3DFILL_SOLID)
+					fillMode = D3DFILL_WIREFRAME;
+				else
+					fillMode = D3DFILL_SOLID;
+
+				device->SetRenderState(D3DRS_FILLMODE, fillMode);
+			}
+
 
 			// Move camera direction
 			if (_inputManager->IsKeyDone(DIK_UP))
@@ -373,6 +389,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 			// Set texture
 			pEffect->SetTexture(hTexture, pTexture);
+
+			pEffect->SetVector(hLightColor, pLightColor);
+			pEffect->SetVector(hLightDirection, pLightDirection);
+
+			pEffect->SetVector(hLookAt, new D3DXVECTOR4(CameraDirection, 0));
 
 			unsigned int cPasses, iPass;
 
@@ -463,17 +484,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 		break;
 	case WM_KEYUP:
-	{
-					 switch (wParam)
-					 {
-					 case VK_ESCAPE:
-					 {
-									   PostQuitMessage(0);
-									   break;
-					 }
-					 }
-					 break;
-	}
+		{
+			switch (wParam)
+			{
+			case VK_ESCAPE:
+				{
+					PostQuitMessage(0);
+					break;
+				}
+			}
+			break;
+		}
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
