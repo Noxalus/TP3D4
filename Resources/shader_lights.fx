@@ -2,7 +2,7 @@ shared float4x4 WorldViewProj;
 shared Texture2D Texture;
 shared float4 LightColor;
 shared float3 LightDirection;
-shared float3 LookAt;
+shared float3 CameraDirection;
 
 struct VertexInput
 {
@@ -46,20 +46,31 @@ VertexOutput VertexMain(VertexInput input)
 
 float4 PixelMain(VertexOutput input) : COLOR0
 {
+	// Invert the light direction for calculations.
+	float3 invertedLightDirection = -LightDirection;
+
+	// Calculate the amount of light on this pixel.
+	float4 diffuseLighting = dot(input.Normal, invertedLightDirection);
+
+	// Determine the final amount of diffuse color based on the diffuse color combined with the light intensity.
+	float4 color = saturate(LightColor * diffuseLighting);
+
 	float4 diffuseColor = tex2D(MapSampler, input.UV);
-	float4 ambiantLighting = float4(0.5, 0.5, 0.5, 0);
-	float4 diffuseLighting = dot(input.Normal, -LightDirection);
+
+	float4 ambiantLighting = float4(1, 1, 1, 0);
 
 	float3 reflectionVector = -LightDirection + (2 * input.Normal * dot(input.Normal, LightDirection));
-	float4 specularLighting = dot(reflectionVector, LookAt);
+	float4 specularLighting = dot(reflectionVector, CameraDirection);
 	specularLighting = pow(specularLighting, 64);
-	float4 specularColor = float4(1, 0, 0, 0);
 
-		float4 finalColor =
-		diffuseColor * ambiantLighting +
-	diffuseColor * diffuseLighting;
+	float4 specularColor = float4(1, 1, 1, 0);
 
-		return finalColor;
+	float4 finalColor =
+	diffuseColor * ambiantLighting +
+	diffuseColor * diffuseLighting +
+	specularColor * specularLighting;
+
+	return finalColor;
 }
 
 technique normal

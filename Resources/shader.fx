@@ -46,20 +46,7 @@ VertexOutput VertexMain(VertexInput input)
 
 float4 PixelMain(VertexOutput input) : COLOR0
 {
-	float4 diffuseColor = tex2D(MapSampler, input.UV);
-	float4 ambiantLighting = float4(0.5, 0.5, 0.5, 0);
-	float4 diffuseLighting = dot(input.Normal, -LightDirection);
-
-	float3 reflectionVector = -LightDirection + (2 * input.Normal * dot(input.Normal, LightDirection));
-	float4 specularLighting = dot(reflectionVector, LookAt);
-	specularLighting = pow(specularLighting, 64);
-	float4 specularColor = float4(1, 0, 0, 0);
-
-		float4 finalColor =
-		diffuseColor * ambiantLighting +
-	diffuseColor * diffuseLighting;
-
-		return finalColor;
+	return tex2D(MapSampler, input.UV);
 }
 
 technique normal

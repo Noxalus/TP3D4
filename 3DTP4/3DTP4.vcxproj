@@ -106,6 +106,9 @@
       <DeploymentContent>false</DeploymentContent>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VertexMain</EntryPointName>
     </FxCompile>
+    <FxCompile Include="..\Resources\shader_lights.fx">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VertexMain</EntryPointName>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

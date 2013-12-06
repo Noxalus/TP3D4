@@ -75,8 +75,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	D3DCOLOR backgroundColor = D3DCOLOR_RGBA(0, 0, 0, 0);
 	DWORD fillMode = D3DFILL_SOLID;
 
-	D3DXVECTOR4 lightColor = D3DXVECTOR4(255, 0, 0, 1);
-	D3DXVECTOR4 lightDirection = D3DXVECTOR4(0, -0.5, -1, 0);
+	bool enableLights = true;
+	D3DXVECTOR4 lightColor = D3DXVECTOR4(255, 255, 255, 255);
+	D3DXVECTOR4 lightDirection = D3DXVECTOR4(0, 0, -1, 0);
 
 	D3DXMATRIX WorldViewProj;
 	D3DXMatrixIdentity(&WorldViewProj);
@@ -101,10 +102,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	D3DXVECTOR3 CameraPosition(0.f, 0.f, -1.f);
 	D3DXVECTOR3 CameraDirection(0.f, 0.f, 1.f);
 
-
 	D3DXVECTOR3 At(0.f, 0.f, 0.f);
 	D3DXVECTOR3 Up(0.f, 1.f, 0.f);
-
 
 	// Projection matrix
 	D3DXMATRIX Projection;
@@ -286,12 +285,22 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	D3DXHANDLE hWorldViewProj = pEffect->GetParameterByName(NULL, "WorldViewProj");
 	D3DXHANDLE hTexture = pEffect->GetParameterByName(NULL, "Texture");
-	D3DXHANDLE hLightColor = pEffect->GetParameterByName(NULL, "LightColor");
-	D3DXHANDLE hLightDirection = pEffect->GetParameterByName(NULL, "LightDirection");
-	D3DXHANDLE hLookAt = pEffect->GetParameterByName(NULL, "LookAt");
 
 	// Shader with lights
-	// ...
+	LPCWSTR pFxFileLights = L"../Resources/shader_lights.fx";
+	LPD3DXEFFECT pEffectLights;
+
+	if (D3D_OK != D3DXCreateEffectFromFile(device, pFxFileLights, NULL, NULL, 0, NULL, &pEffectLights, &CompilationErrors))
+	{
+		MessageBoxA(NULL, (char *)
+			CompilationErrors->GetBufferPointer(), "Error", 0);
+	}
+
+	D3DXHANDLE hWorldViewProjLights = pEffectLights->GetParameterByName(NULL, "WorldViewProj");
+	D3DXHANDLE hTextureLights = pEffectLights->GetParameterByName(NULL, "Texture");
+	D3DXHANDLE hLightColor = pEffectLights->GetParameterByName(NULL, "LightColor");
+	D3DXHANDLE hLightDirection = pEffectLights->GetParameterByName(NULL, "LightDirection");
+	D3DXHANDLE hCameraDirection = pEffectLights->GetParameterByName(NULL, "CameraDirection");
 
 	PeekMessage(&oMsg, NULL, 0, 0, PM_NOREMOVE);
 	while (oMsg.message != WM_QUIT)
@@ -315,6 +324,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 					fillMode = D3DFILL_SOLID;
 
 				device->SetRenderState(D3DRS_FILLMODE, fillMode);
+			}
+
+			// Lights ?
+			if (_inputManager->IsKeyPressed(DIK_F2))
+			{
+				enableLights = !enableLights;
 			}
 
 
@@ -389,36 +404,74 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			// Set device vertex declaration
 			device->SetVertexDeclaration(pDecl);
 
-			// "Send" WorldViewProj matrix to shader
-			pEffect->SetMatrix(hWorldViewProj, &WorldViewProj);
-
-			// Set texture
-			pEffect->SetTexture(hTexture, pTexture);
-
-			pEffect->SetVector(hLightColor, &lightColor);
-			pEffect->SetVector(hLightDirection, &lightDirection);
-
-			pEffect->SetVector(hLookAt, new D3DXVECTOR4(CameraDirection, 0));
-
-			unsigned int cPasses, iPass;
-
-			// Draw map
-			device->SetStreamSource(0, pMapVertexBuffer, 0, sizeof(Vertex));
-			device->SetIndices(pMapIndexBuffer);
-
-			cPasses = 0, iPass = 0;
-			pEffect->Begin(&cPasses, 0);
-			for (iPass = 0; iPass < cPasses; ++iPass)
+			// Draw without lights
+			if (!enableLights)
 			{
-				pEffect->BeginPass(iPass);
-				pEffect->CommitChanges(); // que si on a changé des états après le BeginPass
+				// "Send" WorldViewProj matrix to shader
+				pEffect->SetMatrix(hWorldViewProj, &WorldViewProj);
 
-				device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 2 * (m_sizeX * m_sizeZ), 0, 2 * ((m_sizeX * m_sizeZ) - 1));
+				// Set texture
+				pEffect->SetTexture(hTexture, pTexture);
 
-				pEffect->EndPass();
+				pEffect->SetVector(hLightColor, &lightColor);
+				pEffect->SetVector(hLightDirection, &lightDirection);
+
+				pEffect->SetVector(hCameraDirection, new D3DXVECTOR4(CameraDirection, 0));
+
+				unsigned int cPasses, iPass;
+
+				// Draw map
+				device->SetStreamSource(0, pMapVertexBuffer, 0, sizeof(Vertex));
+				device->SetIndices(pMapIndexBuffer);
+
+				cPasses = 0, iPass = 0;
+				pEffect->Begin(&cPasses, 0);
+				for (iPass = 0; iPass < cPasses; ++iPass)
+				{
+					pEffect->BeginPass(iPass);
+					pEffect->CommitChanges(); // que si on a changé des états après le BeginPass
+
+					device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 2 * (m_sizeX * m_sizeZ), 0, 2 * ((m_sizeX * m_sizeZ) - 1));
+
+					pEffect->EndPass();
+				}
+
+				pEffect->End();
 			}
+			// Draw with lights
+			else
+			{
+				// "Send" WorldViewProj matrix to shader
+				pEffectLights->SetMatrix(hWorldViewProjLights, &WorldViewProj);
 
-			pEffect->End();
+				// Set texture
+				pEffectLights->SetTexture(hTextureLights, pTexture);
+
+				pEffectLights->SetVector(hLightColor, &lightColor);
+				pEffectLights->SetVector(hLightDirection, &lightDirection);
+
+				pEffectLights->SetVector(hCameraDirection, new D3DXVECTOR4(CameraDirection, 0));
+
+				unsigned int cPasses, iPass;
+
+				// Draw map
+				device->SetStreamSource(0, pMapVertexBuffer, 0, sizeof(Vertex));
+				device->SetIndices(pMapIndexBuffer);
+
+				cPasses = 0, iPass = 0;
+				pEffectLights->Begin(&cPasses, 0);
+				for (iPass = 0; iPass < cPasses; ++iPass)
+				{
+					pEffectLights->BeginPass(iPass);
+					pEffectLights->CommitChanges(); // que si on a changé des états après le BeginPass
+
+					device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 2 * (m_sizeX * m_sizeZ), 0, 2 * ((m_sizeX * m_sizeZ) - 1));
+
+					pEffectLights->EndPass();
+				}
+
+				pEffectLights->End();
+			}
 
 			device->EndScene();
 			device->Present(NULL, NULL, NULL, NULL);
