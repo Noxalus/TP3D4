@@ -49,15 +49,26 @@ float4 PixelMain(VertexOutput input) : COLOR0
 	// Invert the light direction for calculations.
 	float3 invertedLightDirection = -LightDirection;
 
-	// Calculate the amount of light on this pixel.
 	float4 diffuseLighting = dot(input.Normal, invertedLightDirection);
 
-	// Determine the final amount of diffuse color based on the diffuse color combined with the light intensity.
-	float4 color = saturate(LightColor * diffuseLighting);
+	// Calculate the amount of light on this pixel.
+	float lightIntensity = saturate(diffuseLighting);
 
-	float4 diffuseColor = tex2D(MapSampler, input.UV);
+	float4 ambiantColor = float4(1, 1, 1, 0);
+	float4 color = ambiantColor;
 
-	float4 ambiantLighting = float4(1, 1, 1, 0);
+	if (lightIntensity > 0.0f)
+	{
+		// Determine the final diffuse color based on the diffuse color and the amount of light intensity.
+		color += (LightColor * lightIntensity);
+	}
+
+	// Saturate the final light color.
+	color = saturate(color);
+
+	float4 diffuseColor = color * tex2D(MapSampler, input.UV);
+
+	float4 ambiantLighting = float4(0.5, 0.5, 0.5, 0);
 
 	float3 reflectionVector = -LightDirection + (2 * input.Normal * dot(input.Normal, LightDirection));
 	float4 specularLighting = dot(reflectionVector, CameraDirection);
