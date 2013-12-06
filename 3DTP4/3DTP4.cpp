@@ -47,8 +47,8 @@ bool LoadRAW(const std::string& map)
 	fclose(file);
 	int i = 0;
 	for (unsigned short z = 0; z < m_sizeZ; ++z)
-		for (unsigned short x = 0; x < m_sizeX; ++x, ++i)
-			m_height[i] = float((m_maxY * tmp[i]) / 255.0f);
+	for (unsigned short x = 0; x < m_sizeX; ++x, ++i)
+		m_height[i] = float((m_maxY * tmp[i]) / 255.0f);
 	delete [] tmp;
 	return true;
 }
@@ -75,9 +75,17 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	D3DCOLOR backgroundColor = D3DCOLOR_RGBA(0, 0, 0, 0);
 	DWORD fillMode = D3DFILL_SOLID;
 
+	// Lights
 	bool enableLights = true;
-	D3DXVECTOR4 lightColor = D3DXVECTOR4(255, 255, 255, 255);
-	D3DXVECTOR4 lightDirection = D3DXVECTOR4(0, 0, -1, 0);
+
+	// Directional light
+	D3DXVECTOR3 directionalLightDirection = D3DXVECTOR3(-1, 0, 0);
+	D3DXVECTOR4 directionalLightColor = D3DXVECTOR4(255, 255, 255, 0);
+
+	// Omni light
+	D3DXVECTOR4 *omniLightPositions = new D3DXVECTOR4[1]{ D3DXVECTOR4(0, 2, 0, 0) };
+	D3DXVECTOR4 *omniLightColors = new D3DXVECTOR4[1]{ D3DXVECTOR4(255, 0, 255, 0) };
+	float omniLightDistance = 10;
 
 	D3DXMATRIX WorldViewProj;
 	D3DXMatrixIdentity(&WorldViewProj);
@@ -170,7 +178,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	// Culling ?
 	//device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-
 
 	// Load texture
 	LPCWSTR pMapTexture = L"../Resources/terraintexture.jpg";
@@ -298,9 +305,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	D3DXHANDLE hWorldViewProjLights = pEffectLights->GetParameterByName(NULL, "WorldViewProj");
 	D3DXHANDLE hTextureLights = pEffectLights->GetParameterByName(NULL, "Texture");
-	D3DXHANDLE hLightColor = pEffectLights->GetParameterByName(NULL, "LightColor");
-	D3DXHANDLE hLightDirection = pEffectLights->GetParameterByName(NULL, "LightDirection");
+	D3DXHANDLE hDirectionalLightColor = pEffectLights->GetParameterByName(NULL, "DirectionalLightColor");
+	D3DXHANDLE hDirectionalLightDirection = pEffectLights->GetParameterByName(NULL, "DirectionalLightDirection");
 	D3DXHANDLE hCameraDirection = pEffectLights->GetParameterByName(NULL, "CameraDirection");
+	D3DXHANDLE hOmniLightPosition = pEffectLights->GetParameterByName(NULL, "OmniLightPosition");
+	D3DXHANDLE hOmniLightColor = pEffectLights->GetParameterByName(NULL, "OmniLightColor");
+	D3DXHANDLE hOmniLightDistance = pEffectLights->GetParameterByName(NULL, "OmniLightDistance");
 
 	PeekMessage(&oMsg, NULL, 0, 0, PM_NOREMOVE);
 	while (oMsg.message != WM_QUIT)
@@ -389,6 +399,44 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 				D3DXVec3Cross(&orthogonaleDirection, &CameraDirection, &Up);
 				CameraPosition -= orthogonaleDirection * 1;
 			}
+			// Jump
+			if (_inputManager->IsKeyDone(DIK_SPACE))
+			{
+				CameraPosition.y += 1;
+			}
+			// Crouch
+			if (_inputManager->IsKeyDone(DIK_LCONTROL))
+			{
+				CameraPosition.y -= 1;
+			}
+
+			// Move the sun
+			if (_inputManager->IsKeyDone(DIK_NUMPAD4))
+			{
+				directionalLightDirection.x -= 0.1f;
+			}
+			if (_inputManager->IsKeyDone(DIK_NUMPAD6))
+			{
+				directionalLightDirection.x += 0.1f;
+			}
+			if (_inputManager->IsKeyDone(DIK_NUMPAD5))
+			{
+				directionalLightDirection.y -= 0.1f;
+			}
+			if (_inputManager->IsKeyDone(DIK_NUMPAD8))
+			{
+				directionalLightDirection.y += 0.1f;
+			}
+			if (_inputManager->IsKeyDone(DIK_NUMPAD7))
+			{
+				directionalLightDirection.z -= 0.1f;
+			}
+			if (_inputManager->IsKeyDone(DIK_NUMPAD9))
+			{
+				directionalLightDirection.z += 0.1f;
+			}
+
+			D3DXVec3Normalize(&directionalLightDirection, &directionalLightDirection);
 
 			At = CameraPosition + CameraDirection;
 
@@ -412,9 +460,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 				// Set texture
 				pEffect->SetTexture(hTexture, pTexture);
-
-				pEffect->SetVector(hLightColor, &lightColor);
-				pEffect->SetVector(hLightDirection, &lightDirection);
 
 				pEffect->SetVector(hCameraDirection, new D3DXVECTOR4(CameraDirection, 0));
 
@@ -447,10 +492,16 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 				// Set texture
 				pEffectLights->SetTexture(hTextureLights, pTexture);
 
-				pEffectLights->SetVector(hLightColor, &lightColor);
-				pEffectLights->SetVector(hLightDirection, &lightDirection);
+				// Directional light
+				pEffectLights->SetVector(hDirectionalLightColor, &directionalLightColor);
+				pEffectLights->SetVector(hDirectionalLightDirection, new D3DXVECTOR4(directionalLightDirection, 0));
 
 				pEffectLights->SetVector(hCameraDirection, new D3DXVECTOR4(CameraDirection, 0));
+
+				// Omni light
+				pEffectLights->SetVectorArray(hOmniLightPosition, omniLightPositions, 1);
+				pEffectLights->SetVectorArray(hOmniLightColor, omniLightColors, 1);
+				pEffectLights->SetFloat(hOmniLightDistance, omniLightDistance);
 
 				unsigned int cPasses, iPass;
 
@@ -542,17 +593,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 		break;
 	case WM_KEYUP:
-		{
-			switch (wParam)
-			{
-			case VK_ESCAPE:
-				{
-					PostQuitMessage(0);
-					break;
-				}
-			}
-			break;
-		}
+	{
+					 switch (wParam)
+					 {
+					 case VK_ESCAPE:
+					 {
+									   PostQuitMessage(0);
+									   break;
+					 }
+					 }
+					 break;
+	}
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
