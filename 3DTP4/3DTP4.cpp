@@ -75,8 +75,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	D3DCOLOR backgroundColor = D3DCOLOR_RGBA(0, 0, 0, 0);
 	DWORD fillMode = D3DFILL_SOLID;
 
-	D3DXVECTOR4 *pLightColor = new D3DXVECTOR4(255, 255, 255, 1);
-	D3DXVECTOR4 *pLightDirection = new D3DXVECTOR4(0, 0, 0, 0);
+	D3DXVECTOR4 lightColor = D3DXVECTOR4(255, 0, 0, 1);
+	D3DXVECTOR4 lightDirection = D3DXVECTOR4(0, -0.5, -1, 0);
 
 	D3DXMATRIX WorldViewProj;
 	D3DXMatrixIdentity(&WorldViewProj);
@@ -273,7 +273,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	pMapIndexBuffer->Unlock();
 
-	// Shader
+	// Simple shader
 	LPCWSTR pFxFile = L"../Resources/shader.fx";
 	LPD3DXEFFECT pEffect;
 	LPD3DXBUFFER CompilationErrors;
@@ -289,6 +289,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	D3DXHANDLE hLightColor = pEffect->GetParameterByName(NULL, "LightColor");
 	D3DXHANDLE hLightDirection = pEffect->GetParameterByName(NULL, "LightDirection");
 	D3DXHANDLE hLookAt = pEffect->GetParameterByName(NULL, "LookAt");
+
+	// Shader with lights
+	// ...
 
 	PeekMessage(&oMsg, NULL, 0, 0, PM_NOREMOVE);
 	while (oMsg.message != WM_QUIT)
@@ -392,8 +395,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			// Set texture
 			pEffect->SetTexture(hTexture, pTexture);
 
-			pEffect->SetVector(hLightColor, pLightColor);
-			pEffect->SetVector(hLightDirection, pLightDirection);
+			pEffect->SetVector(hLightColor, &lightColor);
+			pEffect->SetVector(hLightDirection, &lightDirection);
 
 			pEffect->SetVector(hLookAt, new D3DXVECTOR4(CameraDirection, 0));
 
